@@ -3,13 +3,47 @@
 #include <regex>
 #include <iomanip>
 #include <sstream>
+#include <cassert>
+
+#define RESET   "\033[0m"
+#define BLACK   "\033[30m"      /* Black */
+#define RED     "\033[31m"      /* Red */
+#define GREEN   "\033[32m"      /* Green */
+#define YELLOW  "\033[33m"      /* Yellow */
+#define BLUE    "\033[34m"      /* Blue */
+#define MAGENTA "\033[35m"      /* Magenta */
+#define CYAN    "\033[36m"      /* Cyan */
+#define WHITE   "\033[37m"      /* White */
+#define BOLDBLACK   "\033[1m\033[30m"      /* Bold Black */
+#define BOLDRED     "\033[1m\033[31m"      /* Bold Red */
+#define BOLDGREEN   "\033[1m\033[32m"      /* Bold Green */
+#define BOLDYELLOW  "\033[1m\033[33m"      /* Bold Yellow */
+#define BOLDBLUE    "\033[1m\033[34m"      /* Bold Blue */
+#define BOLDMAGENTA "\033[1m\033[35m"      /* Bold Magenta */
+#define BOLDCYAN    "\033[1m\033[36m"      /* Bold Cyan */
+#define BOLDWHITE   "\033[1m\033[37m"      /* Bold White */
 
 #include <data_parser_lib.hpp>
 
-int main(int argc, char** argv)
+using namespace std::string_literals;
+
+struct Item
 {
-  // Windows or Linux path
-  const std::regex reFilename("^(([A-Za-z]:)?[\\\\\\/])?([a-zA-Z_\\-0-9\.]*[\\\\\\/])*[a-zA-Z_\\-0-9\.]*.([sS]1[pP])$");
+  double freq;
+  struct
+  {
+    double re;
+    double im;
+  } s11;
+};
+
+static const std::string fileNamePattern
+  { R"(^(([A-Za-z]:)?[\\\/])?([a-zA-Z_\-0-9.]*[\\\/])*[a-zA-Z_\-0-9.]*.([sS]1[pP])$)" };
+
+int fileParse(int argc, char** argv)
+{
+  // Path with .s1p file regexp patter
+  const std::regex reFilename{ fileNamePattern };
   if (argc < 2 || false == std::regex_match(argv[1], reFilename))
   {
     std::cerr << "The only argument must be data file name with \"s1p\" extension." << "\n";
@@ -22,36 +56,48 @@ int main(int argc, char** argv)
     std::cerr << "Failed to open file" << "\n";
     return 1;
   }
+  
+  std::string doublePattern{ R"(\-?[1-9]?[0-9]+\.[0-9]+[eE][+\-]?[0-9]{2,})" };
+  std::string spacePattern{ R"([ ]{1,2})" };
+  std::stringstream ssDataLinePattern;
+  ssDataLinePattern << "^"s << "(" << doublePattern << ")" << spacePattern << "(" << doublePattern << ")" << spacePattern << "(" << doublePattern << ")";
+  std::regex dataLineRegex{ ssDataLinePattern.str()};
 
-  std::string fpnpt{ "\\-?([0-9]+\\.[0-9]+)([eE][+\\-][0-9]+)?"};
-  std::string fpnln{ fpnpt + " " + fpnpt + "  " + fpnpt};
+  std::vector<Item> data;
 
-  std::regex fpnre(fpnln);
-  std::string numbers[]
-  {
-    "3.00000000000E+05 -4.87399039514E-01  7.84540075739E-01",
-    "4.52985000000E+07 -4.14090484138E-01  8.24439150397E-01",
-    "9.02970000000E+07 -3.39253327384E-01  8.58125275881E-01",
-    "1.35295500000E+08 -2.60341943202E-01  8.85740900599E-01",
-    "1.80294000000E+08 -1.80839904414E-01  9.05237745511E-01",
-  };
-
-  for(const auto& num: numbers)
-  {
-    std::smatch match;
-    if (false == std::regex_match(num, match, fpnre))
-      std::cerr << "invalid: " << num << "\n";
-    else
-      std::cerr << "valid: " << num << "\n";
-  }
+  size_t lines_skiped = 0;
+  size_t lines_failed = 0;
 
   std::string line;
-  for(size_t ln = 1; std::getline(data_file, line); ++ln)
+  size_t ln = 0;
+  for (; std::getline(data_file, line); ++ln)
   {
-    std::cout << std::setw(4) << std::setfill(' ') << ln << "|" << line << "\n" << std::resetiosflags({});
+    if(line[0] == '#' || line[0] == '!')
+    {
+      ++lines_skiped;
+      continue;
+    }
+
+    std::smatch smatch;
+    if (std::regex_match(line, smatch, dataLineRegex))
+      data.push_back({ std::stod(smatch[1]), {std::stod(smatch[2]), std::stod(smatch[3])} });
+    else
+      ++lines_failed, std::cout << RED << std::setw(4) << std::setfill(' ') << ln + 1 << "|" << line << "\n" << RESET << std::resetiosflags({});
   }
 
+  assert(data.size() == (ln - lines_skiped));
+
+  std::cout << "Data lines read   : " << data.size() << "\n";
+  std::cout << "    Lines total   : " << ln << "\n";
+  std::cout << "    Lines skipped : " << lines_skiped << "\n";
+  std::cout << "    Lines failed  : " << lines_failed << "\n";
+
   std::cout << "Done!" << "\n";
-  
+
   return 0;
+}
+
+int main(int argc, char** argv)
+{
+  return fileParse(argc, argv);
 }
