@@ -5,23 +5,25 @@
 #include <sstream>
 #include <cassert>
 
-#define RESET   "\033[0m"
-#define BLACK   "\033[30m"      /* Black */
-#define RED     "\033[31m"      /* Red */
-#define GREEN   "\033[32m"      /* Green */
-#define YELLOW  "\033[33m"      /* Yellow */
-#define BLUE    "\033[34m"      /* Blue */
-#define MAGENTA "\033[35m"      /* Magenta */
-#define CYAN    "\033[36m"      /* Cyan */
-#define WHITE   "\033[37m"      /* White */
-#define BOLDBLACK   "\033[1m\033[30m"      /* Bold Black */
-#define BOLDRED     "\033[1m\033[31m"      /* Bold Red */
-#define BOLDGREEN   "\033[1m\033[32m"      /* Bold Green */
-#define BOLDYELLOW  "\033[1m\033[33m"      /* Bold Yellow */
-#define BOLDBLUE    "\033[1m\033[34m"      /* Bold Blue */
-#define BOLDMAGENTA "\033[1m\033[35m"      /* Bold Magenta */
-#define BOLDCYAN    "\033[1m\033[36m"      /* Bold Cyan */
-#define BOLDWHITE   "\033[1m\033[37m"      /* Bold White */
+// Some ANSI escape codes for colors
+//
+#define RESET       "\033[0m"         /* reset        */
+#define BLACK       "\033[30m"        /* Black        */
+#define RED         "\033[31m"        /* Red          */
+#define GREEN       "\033[32m"        /* Green        */
+#define YELLOW      "\033[33m"        /* Yellow       */
+#define BLUE        "\033[34m"        /* Blue         */
+#define MAGENTA     "\033[35m"        /* Magenta      */
+#define CYAN        "\033[36m"        /* Cyan         */
+#define WHITE       "\033[37m"        /* White        */
+#define BOLDBLACK   "\033[1m\033[30m" /* Bold Black   */
+#define BOLDRED     "\033[1m\033[31m" /* Bold Red     */
+#define BOLDGREEN   "\033[1m\033[32m" /* Bold Green   */
+#define BOLDYELLOW  "\033[1m\033[33m" /* Bold Yellow  */
+#define BOLDBLUE    "\033[1m\033[34m" /* Bold Blue    */
+#define BOLDMAGENTA "\033[1m\033[35m" /* Bold Magenta */
+#define BOLDCYAN    "\033[1m\033[36m" /* Bold Cyan    */
+#define BOLDWHITE   "\033[1m\033[37m" /* Bold White   */
 
 #include <data_parser_lib.hpp>
 
@@ -46,14 +48,14 @@ int fileParse(int argc, char** argv)
   const std::regex reFilename{ fileNamePattern };
   if (argc < 2 || false == std::regex_match(argv[1], reFilename))
   {
-    std::cerr << "The only argument must be data file name with \"s1p\" extension." << "\n";
+    std::cerr << RED << "[ ERROR ] The only argument must be data file name with \"s1p\" extension." << RESET << "\n";
     return 1;
   }
 
   std::ifstream data_file(argv[1], std::ios_base::in);
   if (false == data_file.is_open())
   {
-    std::cerr << "Failed to open file" << "\n";
+    std::cerr << RED << "[ ERROR ] Failed to open file" << RESET << "\n";
     return 1;
   }
   
@@ -87,12 +89,14 @@ int fileParse(int argc, char** argv)
 
   assert(data.size() == (ln - lines_skiped));
 
+  std::cout << YELLOW;
   std::cout << "Data lines read   : " << data.size() << "\n";
   std::cout << "    Lines total   : " << ln << "\n";
   std::cout << "    Lines skipped : " << lines_skiped << "\n";
   std::cout << "    Lines failed  : " << lines_failed << "\n";
+  std::cout << RESET;
 
-  std::cout << "Done!" << "\n";
+  std::cout << GREEN << "Done!" << RESET << "\n";
 
   return 0;
 }
