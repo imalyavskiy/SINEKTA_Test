@@ -1,6 +1,7 @@
 #ifndef TOUCHSTONEDATA_H
 #define TOUCHSTONEDATA_H
 
+#include <optional>
 #include <QAbstractListModel>
 
 class TouchstoneData : public QObject
@@ -23,15 +24,25 @@ signals:
     void fileLoadSuccess(const QString& filePath);
 
 private:
+    std::optional<std::ifstream> openFile(QString filePath);
+
     struct TouchstoneDataItem
     {
-        double freq;
+        double freq{};
         struct
         {
-            double re;
-            double im;
+            double re{};
+            double im{};
         } s11;
+        double s11_logmag{};
     };
+
+    struct FileReadResult{
+        size_t lines_read{};
+        size_t lines_skipped{};
+        size_t lines_failed{};
+    };
+    std::optional<FileReadResult> readTouchstoneData(std::ifstream& data_file, QList<TouchstoneDataItem>& m_data);
 
     QList<TouchstoneDataItem> m_data;
 };
