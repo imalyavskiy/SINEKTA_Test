@@ -17,15 +17,24 @@ TouchstoneData::TouchstoneData(QObject *parent ) : QObject(parent)
     m_data.clear();
 }
 
-int TouchstoneData::rowCount() const
+int TouchstoneData::size() const
 {
-    return m_data.count();
+    return m_data.size();
 }
 
-QVariantMap TouchstoneData::get(int row) const
+int TouchstoneData::getY(int row) const
 {
-    const TouchstoneDataItem item = m_data.value(row);
-    return { {"Frequency", item.freq}, {"S11_logmag", item.s11_logmag}};
+    if(row >= m_data.size())
+        return 0;
+
+    return m_data[row].s11_logmag;
+}
+
+int TouchstoneData::getX(int row) const
+{
+    if(row >= m_data.size())
+        return 0;
+    return m_data[row].freq;
 }
 
 std::optional<std::ifstream> TouchstoneData::openFile(QString filePath)
@@ -50,7 +59,7 @@ std::optional<std::ifstream> TouchstoneData::openFile(QString filePath)
     return { std::move(data_file) };
 }
 
-std::optional<TouchstoneData::FileReadResult> TouchstoneData::readTouchstoneData(std::ifstream& data_file, QList<TouchstoneDataItem>& m_data)
+std::optional<TouchstoneData::FileReadResult> TouchstoneData::readTouchstoneData(std::ifstream& data_file, std::vector<TouchstoneDataItem>& m_data)
 {
     FileReadResult state;
 
@@ -72,10 +81,22 @@ std::optional<TouchstoneData::FileReadResult> TouchstoneData::readTouchstoneData
         std::smatch smatch;
         if (std::regex_match(line, smatch, dataLineRegex))
         {
-            const double fr = std::stod(smatch[1]);
-            const double re = std::stod(smatch[2]);
-            const double im = std::stod(smatch[3]);
-            m_data.push_back({ fr, {re, im}, 20 * std::log10(std::sqrt(std::pow(re, 2) + std::pow(im, 2))) });
+            const double freq  = std::stod(smatch[1]);
+            const double real  = std::stod(smatch[2]);
+            const double imag  = std::stod(smatch[3]);
+            const double s11_logmag = 20 * std::log10(std::sqrt(std::pow(real, 2) + std::pow(imag, 2)));
+
+            m_data.push_back({ freq, s11_logmag });
+
+            if(freq > dataRect.freqRange.max)
+                dataRect.freqRange.max = freq;
+            else if(freq < dataRect.freqRange.min)
+                dataRect.freqRange.min = freq;
+
+            if(s11_logmag > dataRect.s11Range.max)
+                dataRect.s11Range.max = s11_logmag;
+            else if(s11_logmag < dataRect.s11Range.min)
+                dataRect.s11Range.min = s11_logmag;
         }
         else
             state.lines_failed++;
@@ -84,11 +105,53 @@ std::optional<TouchstoneData::FileReadResult> TouchstoneData::readTouchstoneData
     return {state};
 }
 
-void TouchstoneData::loadData(QString filePath, int viewportWidth, int viewportHeight)
+void TouchstoneData::normalizeData(int left, int right, int bottom, int top)
 {
-    Q_UNUSED(viewportWidth);
-    Q_UNUSED(viewportHeight);
+    if(right <= left)
+        throw std::logic_error("invalid width args");
+    if(top <= bottom)
+        throw std::logic_error("invalid height args");
 
+    const double freqFactor = (right - left)/(dataRect.freqRange.max - dataRect.freqRange.min);
+    const double s11Factor = (top - bottom)/(dataRect.s11Range.max - dataRect.s11Range.min);
+
+    for(auto& dataItem : m_data)
+    {
+        dataItem.freq        = left + freqFactor * (dataItem.freq - dataRect.freqRange.min);
+        dataItem.s11_logmag  = bottom   + s11Factor  * (dataItem.s11_logmag  - dataRect.s11Range.min);
+    }
+}
+
+double TouchstoneData::Dist(const TouchstoneDataItem& left, const TouchstoneDataItem& right)
+{
+    double distance = sqrt(std::pow(left.freq - right.freq, 2) + std::pow(left.s11_logmag - right.s11_logmag, 2));
+    return distance;
+}
+
+void TouchstoneData::filterData(int epsilon)
+{
+    size_t size = m_data.size();
+
+    for(auto it = m_data.begin(); it != m_data.end(); ++it)
+    {
+        auto it_next = it + 1;
+        if(it_next == m_data.end())
+            continue;
+
+        while(epsilon > Dist(*it, *it_next))
+        {
+            m_data.erase(it_next);
+            it_next = it + 1;
+            if(it_next == m_data.end())
+                break;
+        }
+    }
+
+    return;
+}
+
+void TouchstoneData::loadData(QString filePath, int viewportWidth, int viewportHeight, int epsilon)
+{
     m_data.clear();
 
     auto open_file_result = openFile(filePath);
@@ -111,5 +174,10 @@ void TouchstoneData::loadData(QString filePath, int viewportWidth, int viewportH
 
     if(m_data.size() != (read_file_result->lines_read - read_file_result->lines_skipped))
         emit fileLoadFailure(filePath);
+
+    normalizeData(0, viewportWidth, 0, viewportHeight);
+
+    filterData(epsilon);
+
     emit fileLoadSuccess(filePath);
 }

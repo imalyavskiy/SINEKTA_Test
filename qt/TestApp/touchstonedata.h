@@ -11,10 +11,12 @@ class TouchstoneData : public QObject
 public:
     explicit TouchstoneData(QObject *parent = nullptr);
 
-    Q_INVOKABLE int rowCount() const;
-    Q_INVOKABLE QVariantMap get(int row) const;
+    Q_INVOKABLE int size() const;
 
-    Q_INVOKABLE void loadData(QString filePath, int viewportWidth, int viewportHeight);
+    Q_INVOKABLE int getX(int row) const;
+    Q_INVOKABLE int getY(int row) const;
+
+    Q_INVOKABLE void loadData(QString filePath, int viewportWidth, int viewportHeight, int epsilon);
 
 signals:
     // signal intended to be connected in QML MUST follow lowerCamelCase style in C++
@@ -29,22 +31,31 @@ private:
     struct TouchstoneDataItem
     {
         double freq{};
-        struct
-        {
-            double re{};
-            double im{};
-        } s11;
         double s11_logmag{};
     };
+
+    struct {
+        struct {
+            double min{};
+            double max{};
+        } freqRange, s11Range;
+    }dataRect;
 
     struct FileReadResult{
         size_t lines_read{};
         size_t lines_skipped{};
         size_t lines_failed{};
     };
-    std::optional<FileReadResult> readTouchstoneData(std::ifstream& data_file, QList<TouchstoneDataItem>& m_data);
 
-    QList<TouchstoneDataItem> m_data;
+    std::optional<FileReadResult> readTouchstoneData(std::ifstream& data_file, std::vector<TouchstoneDataItem>& m_data);
+
+    void normalizeData(int left, int right, int bottom, int top);
+
+    void filterData(int epsilon);
+
+    std::vector<TouchstoneDataItem> m_data;
+
+    double Dist(const TouchstoneDataItem& left, const TouchstoneDataItem& right);
 };
 
 
