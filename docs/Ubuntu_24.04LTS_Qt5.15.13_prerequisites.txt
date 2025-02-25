@@ -7,3 +7,11 @@ sudo apt install qtquickcontrols2-5-examples
 sudo apt install qt5-doc qt5-doc-html
 
 sudo apt install qml-module-qtquick-controls2
+
+sudo apt install qml
+
+sudo apt install qtdeclarative5-dev
+
+sudo apt install qml-module-qtquick-controls
+
+sudo apt-get install qml-module-qtquick-dialogs
