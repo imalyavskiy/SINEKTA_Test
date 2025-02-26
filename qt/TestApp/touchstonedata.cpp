@@ -81,10 +81,16 @@ std::optional<TouchstoneData::FileReadResult> TouchstoneData::readTouchstoneData
         std::smatch smatch;
         if (std::regex_match(line, smatch, dataLineRegex))
         {
-            const double freq  = std::stod(smatch[1]);
-            const double real  = std::stod(smatch[2]);
-            const double imag  = std::stod(smatch[3]);
-            const double s11_logmag = 20 * std::log10(std::sqrt(std::pow(real, 2) + std::pow(imag, 2)));
+            // Such a strange 3 lines of code below are caused by the std::stod failng to read rational
+            // part fo the scientific floating point ration notation - it reads just a portion before
+            // decimal dot, at work(!), at home it was working as expected yeterday...
+            // not sure what is the reason...
+            // o_O Deadly funny!..
+            auto freq = QString(smatch[1].str().c_str()).toDouble();
+            auto real = QString(smatch[2].str().c_str()).toDouble();
+            auto imag = QString(smatch[3].str().c_str()).toDouble();
+
+            double s11_logmag = 20 * std::log10(std::sqrt(std::pow(real, 2) + std::pow(imag, 2)));
 
             m_data.push_back({ freq, s11_logmag });
 
@@ -105,12 +111,13 @@ std::optional<TouchstoneData::FileReadResult> TouchstoneData::readTouchstoneData
     return {state};
 }
 
-void TouchstoneData::normalizeData(int left, int right, int bottom, int top)
+bool TouchstoneData::normalizeData(int left, int right, int bottom, int top)
 {
-    if(right <= left)
-        throw std::logic_error("invalid width args");
-    if(top <= bottom)
-        throw std::logic_error("invalid height args");
+    if(right <= left || top <= bottom)
+    {
+        qDebug() << "TouchstoneData::normalizeData - invalid args";
+        return false;
+    }
 
     const double freqFactor = (right - left)/(dataRect.freqRange.max - dataRect.freqRange.min);
     const double s11Factor = (top - bottom)/(dataRect.s11Range.max - dataRect.s11Range.min);
@@ -118,8 +125,10 @@ void TouchstoneData::normalizeData(int left, int right, int bottom, int top)
     for(auto& dataItem : m_data)
     {
         dataItem.freq        = left + freqFactor * (dataItem.freq - dataRect.freqRange.min);
-        dataItem.s11_logmag  = bottom   + s11Factor  * (dataItem.s11_logmag  - dataRect.s11Range.min);
+        dataItem.s11_logmag  = bottom + s11Factor  * (dataItem.s11_logmag  - dataRect.s11Range.min);
     }
+
+    return true;
 }
 
 double TouchstoneData::Dist(const TouchstoneDataItem& left, const TouchstoneDataItem& right)
@@ -128,10 +137,18 @@ double TouchstoneData::Dist(const TouchstoneDataItem& left, const TouchstoneData
     return distance;
 }
 
-void TouchstoneData::filterData(int epsilon)
+bool TouchstoneData::validateData()
 {
-    size_t size = m_data.size();
+    for(auto it = m_data.begin(), it_next = it + 1; it_next != m_data.end(); ++it, ++it_next)
+    {
+        if(it->freq > it_next->freq)
+            return false;
+    }
+    return true;
+}
 
+bool TouchstoneData::filterData(int epsilon)
+{
     for(auto it = m_data.begin(); it != m_data.end(); ++it)
     {
         auto it_next = it + 1;
@@ -147,37 +164,66 @@ void TouchstoneData::filterData(int epsilon)
         }
     }
 
-    return;
+    return true;
 }
 
 void TouchstoneData::loadData(QString filePath, int viewportWidth, int viewportHeight, int epsilon)
 {
     m_data.clear();
 
-    auto open_file_result = openFile(filePath);
+    // open file
+    auto open_file_result =
+        openFile(filePath);
     if(false == open_file_result.has_value())
     {
-        emit fileLoadFailure(filePath);
+        emit fileLoadFailure(filePath, "File cannot be used.");
         return;
     }
 
-    std::ifstream data_file =
-        std::move(open_file_result.value());
-
+    // validate and deserialize data
     auto read_file_result =
-        readTouchstoneData(data_file, m_data);
+        readTouchstoneData(open_file_result.value(), m_data);
     if(false == read_file_result.has_value())
     {
-        emit fileLoadFailure(filePath);
+        emit fileLoadFailure(filePath, "Error while reading data from file.");
         return;
     }
 
+    // check that all data items were read
     if(m_data.size() != (read_file_result->lines_read - read_file_result->lines_skipped))
-        emit fileLoadFailure(filePath);
+    {
+        emit fileLoadFailure(filePath, "Malformed data.");
+        return;
+    }
 
-    normalizeData(0, viewportWidth, 0, viewportHeight);
+    // validate rought data
+    if(false == validateData())
+    {
+        emit fileLoadFailure(filePath, "Rough data validation failed.");
+        return;
+    }
 
-    filterData(epsilon);
+    // squize data to fit to supplied gived region
+    if(false == normalizeData(0, viewportWidth, 0, viewportHeight))
+    {
+        emit fileLoadFailure(filePath, "Data normaliztion failed.");
+        return;
+    }
 
+    // remove points that a excessive to be plotted
+    if(false == filterData(epsilon))
+    {
+        emit fileLoadFailure(filePath, "Data filtering failed.");
+        return;
+    }
+
+    // validate final data
+    if(false == validateData())
+    {
+        emit fileLoadFailure(filePath, "Filtered data validation failed.");
+        return;
+    }
+
+    // success
     emit fileLoadSuccess(filePath);
 }

@@ -57,17 +57,21 @@ import TestApp.Data 1.0
 
 ApplicationWindow {
   id: applicationWindow
+
   width: Screen.width * 0.7
   height: Screen.height * 0.7
-  maximumWidth: width
-  maximumHeight: height
+  minimumWidth: width
+  minimumHeight: height
+  maximumWidth: minimumWidth
+  maximumHeight: minimumHeight
+
   visible: true
 
   property TouchstoneData dataModel : TouchstoneData
   {
     onFileLoadSuccess: {
       statusText.color = "green"
-      statusText.text = "[ OK ] File \"" + filePath + "\" load suceeded."
+      statusText.text = "[ SUCCESS ] File \"" + filePath + "\" load suceeded."
       console.log(statusText.text)
 
       touchstoneCanvas.requestPaint()
@@ -75,7 +79,7 @@ ApplicationWindow {
 
     onFileLoadFailure: {
       statusText.color = "red"
-      statusText.text = "[ ERROR ] File \"" + filePath + "\" load failed."
+      statusText.text = "[ FAILURE ] File \"" + filePath + "\" load failed.(" + reason +")"
       console.log(statusText.text)
     }
   }
@@ -116,13 +120,13 @@ ApplicationWindow {
     property int color_index: 0
 
     onPaint: {
+      var ctx = getContext("2d")
+      ctx.reset();
+
       var size = dataModel.size();
       console.log("dataModel.size() returned " + size);
 
       if(size > 0) {
-        var ctx = getContext("2d")
-        ctx.reset();
-
         ctx.beginPath();
 
         ctx.lineWidth = 2;
@@ -148,7 +152,7 @@ ApplicationWindow {
   footer: Text
   {
     id: statusText
-    text: "No file opened."
+    text: "[ WAITING ] No file opened."
   }
 }
 

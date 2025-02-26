@@ -22,7 +22,7 @@ signals:
     // signal intended to be connected in QML MUST follow lowerCamelCase style in C++
     // to connect in QML the signal MUST be mentioned in the same style but starting with 'on'
     // e.g. if 'fileLoadFailure' then 'onFileLoadFailure'
-    void fileLoadFailure(const QString& filePath);
+    void fileLoadFailure(const QString& filePath, const QString& reason);
     void fileLoadSuccess(const QString& filePath);
 
 private:
@@ -49,13 +49,15 @@ private:
 
     std::optional<FileReadResult> readTouchstoneData(std::ifstream& data_file, std::vector<TouchstoneDataItem>& m_data);
 
-    void normalizeData(int left, int right, int bottom, int top);
+    bool normalizeData(int left, int right, int bottom, int top);
 
-    void filterData(int epsilon);
+    bool filterData(int epsilon);
 
     std::vector<TouchstoneDataItem> m_data;
 
     double Dist(const TouchstoneDataItem& left, const TouchstoneDataItem& right);
+
+    bool validateData();
 };
 
 
