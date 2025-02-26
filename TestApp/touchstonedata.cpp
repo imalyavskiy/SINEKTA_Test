@@ -22,19 +22,11 @@ int TouchstoneData::size() const
     return m_data.size();
 }
 
-int TouchstoneData::getY(int row) const
+QPoint TouchstoneData::getPoint(int index)
 {
-    if(row >= m_data.size())
-        return 0;
-
-    return m_data[row].s11_logmag;
-}
-
-int TouchstoneData::getX(int row) const
-{
-    if(row >= m_data.size())
-        return 0;
-    return m_data[row].freq;
+    if(index >= m_data.size())
+        return {0, 0};
+    return {static_cast<int>(m_data[index].freq), static_cast<int>(m_data[index].s11_logmag)};
 }
 
 std::optional<std::ifstream> TouchstoneData::openFile(QString filePath)
@@ -42,13 +34,14 @@ std::optional<std::ifstream> TouchstoneData::openFile(QString filePath)
     static const std::string fileNamePattern
         { R"(^((([A-Za-z]:)|(((file)|(qrc)):\/\/))?[\\\/])?([a-zA-Z_\-0-9.]*[\\\/])*[a-zA-Z_\-0-9.]*.([sS]1[pP])$)"};
 
-    // Path with .s1p file regexp patter
+    // Path with .s1p file regexp pattern
     const std::regex reFilename{ fileNamePattern };
     if (false == std::regex_match(filePath.toStdString(), reFilename))
         return {};
 
     if(filePath.startsWith("file://"))
         filePath.remove("file://");
+    else
     if(filePath.startsWith("qrc://"))
         filePath.remove("qrc://");
 
@@ -84,9 +77,9 @@ std::optional<TouchstoneData::FileReadResult> TouchstoneData::readTouchstoneData
             // Such a strange 3 lines of code below are caused by the std::stod failng to read fractional
             // part fo the scientific floating point number representation - it reads just integral part, at work(!).
             // Yesterday, at home it was working as expected... not sure what is the reason... o_O Deadly funny!..
-            auto freq = QString(smatch[1].str().c_str()).toDouble();
-            auto real = QString(smatch[2].str().c_str()).toDouble();
-            auto imag = QString(smatch[3].str().c_str()).toDouble();
+            const auto freq = QString(smatch[1].str().c_str()).toDouble();
+            const auto real = QString(smatch[2].str().c_str()).toDouble();
+            const auto imag = QString(smatch[3].str().c_str()).toDouble();
 
             double s11_logmag = 20 * std::log10(std::sqrt(std::pow(real, 2) + std::pow(imag, 2)));
 
@@ -138,10 +131,8 @@ double TouchstoneData::Dist(const TouchstoneDataItem& left, const TouchstoneData
 bool TouchstoneData::validateData()
 {
     for(auto it = m_data.begin(), it_next = it + 1; it_next != m_data.end(); ++it, ++it_next)
-    {
         if(it->freq > it_next->freq)
             return false;
-    }
     return true;
 }
 
@@ -167,6 +158,7 @@ bool TouchstoneData::filterData(int epsilon)
 
 void TouchstoneData::loadData(QString filePath, int viewportWidth, int viewportHeight, int epsilon)
 {
+    // prepare
     m_data.clear();
 
     // open file
@@ -201,14 +193,14 @@ void TouchstoneData::loadData(QString filePath, int viewportWidth, int viewportH
         return;
     }
 
-    // squize data to fit to supplied gived region
+    // squize data to fit the supplied region
     if(false == normalizeData(0, viewportWidth, 0, viewportHeight))
     {
         emit fileLoadFailure(filePath, "Data normaliztion failed.");
         return;
     }
 
-    // remove points that a excessive to be plotted
+    // remove points that are excessive to be plotted
     if(false == filterData(epsilon))
     {
         emit fileLoadFailure(filePath, "Data filtering failed.");

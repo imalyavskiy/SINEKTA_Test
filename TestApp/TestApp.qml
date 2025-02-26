@@ -67,7 +67,7 @@ ApplicationWindow {
 
   visible: true
 
-  property TouchstoneData dataModel : TouchstoneData
+  property TouchstoneData dataSource : TouchstoneData
   {
     onFileLoadSuccess: {
       statusText.color = "green"
@@ -90,7 +90,7 @@ ApplicationWindow {
     folder: shortcuts.home
     onAccepted: {
       console.log("You chose: " + fileDialog.fileUrls)
-      dataModel.loadData(fileDialog.fileUrls, touchstoneCanvas.width, touchstoneCanvas.height, 10)
+      dataSource.loadData(fileDialog.fileUrls, touchstoneCanvas.width, touchstoneCanvas.height, 10)
     }
     onRejected: {
         console.log("Canceled")
@@ -123,8 +123,8 @@ ApplicationWindow {
       var ctx = getContext("2d")
       ctx.reset();
 
-      var size = dataModel.size();
-      console.log("dataModel.size() returned " + size);
+      var size = dataSource.size();
+      console.log("dataSource.size() returned " + size);
 
       if(size > 0) {
         ctx.beginPath();
@@ -132,15 +132,12 @@ ApplicationWindow {
         ctx.lineWidth = 2;
         ctx.strokeStyle = color_value[color_index]
 
-        var x0 = dataModel.getX(0);
-        var y0 = dataModel.getY(0);
-
-        ctx.moveTo(x0, y0);
+        var pt0 = dataSource.getPoint(0);
+        ctx.moveTo(pt0.x, pt0.y);
         for(var i = 1; i < size; i++ )
         {
-          var xN = dataModel.getX(i);
-          var yN = dataModel.getY(i);
-          ctx.lineTo(xN, yN);
+          var ptN = dataSource.getPoint(i);
+          ctx.lineTo(ptN.x, ptN.y);
         }
         ctx.stroke();
 

@@ -3,6 +3,7 @@
 
 #include <optional>
 #include <QAbstractListModel>
+#include <QPoint>
 
 class TouchstoneData : public QObject
 {
@@ -13,11 +14,9 @@ public:
 
     Q_INVOKABLE int size() const;
 
-    Q_INVOKABLE int getX(int row) const;
-    Q_INVOKABLE int getY(int row) const;
-
     Q_INVOKABLE void loadData(QString filePath, int viewportWidth, int viewportHeight, int epsilon);
 
+    Q_INVOKABLE QPoint getPoint(int index);
 signals:
     // signal intended to be connected in QML MUST follow lowerCamelCase style in C++
     // to connect in QML the signal MUST be mentioned in the same style but starting with 'on'
