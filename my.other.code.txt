@@ -1,5 +1,0 @@
-3DMath
-https://github.com/imalyavskiy/TestGameEngine_v000.git
-
-C++17 JSON
-https://github.com/imalyavskiy/test_json_parser
