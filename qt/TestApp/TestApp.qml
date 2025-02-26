@@ -69,6 +69,8 @@ ApplicationWindow {
       statusText.color = "green"
       statusText.text = "[ OK ] File \"" + filePath + "\" load suceeded."
       console.log(statusText.text)
+
+      touchstoneCanvas.requestPaint()
     }
 
     onFileLoadFailure: {
@@ -84,7 +86,7 @@ ApplicationWindow {
     folder: shortcuts.home
     onAccepted: {
       console.log("You chose: " + fileDialog.fileUrls)
-      dataModel.loadData(fileDialog.fileUrls, touchstoneCanvas.width, touchstoneCanvas.height)
+      dataModel.loadData(fileDialog.fileUrls, touchstoneCanvas.width, touchstoneCanvas.height, 10)
     }
     onRejected: {
         console.log("Canceled")
@@ -109,6 +111,38 @@ ApplicationWindow {
   Canvas {
     id: touchstoneCanvas
     anchors.fill: parent
+
+    property var color_value: ["#aa0000", "#00aa00", "#0000aa", "#00aaaa", "#aa00aa", "#aaaa00"]
+    property int color_index: 0
+
+    onPaint: {
+      var size = dataModel.size();
+      console.log("dataModel.size() returned " + size);
+
+      if(size > 0) {
+        var ctx = getContext("2d")
+        ctx.reset();
+
+        ctx.beginPath();
+
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = color_value[color_index]
+
+        var x0 = dataModel.getX(0);
+        var y0 = dataModel.getY(0);
+
+        ctx.moveTo(x0, y0);
+        for(var i = 1; i < size; i++ )
+        {
+          var xN = dataModel.getX(i);
+          var yN = dataModel.getY(i);
+          ctx.lineTo(xN, yN);
+        }
+        ctx.stroke();
+
+        color_index = (color_index + 1) % 6
+      }
+    }
   }
 
   footer: Text
