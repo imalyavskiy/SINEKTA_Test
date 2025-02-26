@@ -4,8 +4,10 @@ Repository structure
 --------------------
 ./TestApp 
   - test application sources
+
 ./docs
   - the task, some sample data files(*.s1p), and memo article with LERP formulas
+
 ./*
   - qt instal/remove scripts, this README.MD
 
