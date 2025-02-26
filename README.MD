@@ -31,7 +31,7 @@ To make sure that all the data are packed with the application in a single place
 either copy the archieve to a clean machine or remove qt packages from the system
 by means of 'remove.qt_5.15.3.sh' script.
 
-Then extract the archive and run TestApp.sh from the root of extracted folder.
+Then extract the archive and run TestApp.sh from the root of the extracted folder.
 
 Cheers! Have fun!
 
