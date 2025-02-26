@@ -81,11 +81,9 @@ std::optional<TouchstoneData::FileReadResult> TouchstoneData::readTouchstoneData
         std::smatch smatch;
         if (std::regex_match(line, smatch, dataLineRegex))
         {
-            // Such a strange 3 lines of code below are caused by the std::stod failng to read rational
-            // part fo the scientific floating point ration notation - it reads just a portion before
-            // decimal dot, at work(!), at home it was working as expected yeterday...
-            // not sure what is the reason...
-            // o_O Deadly funny!..
+            // Such a strange 3 lines of code below are caused by the std::stod failng to read fractional
+            // part fo the scientific floating point number representation - it reads just integral part, at work(!).
+            // Yesterday, at home it was working as expected... not sure what is the reason... o_O Deadly funny!..
             auto freq = QString(smatch[1].str().c_str()).toDouble();
             auto real = QString(smatch[2].str().c_str()).toDouble();
             auto imag = QString(smatch[3].str().c_str()).toDouble();
