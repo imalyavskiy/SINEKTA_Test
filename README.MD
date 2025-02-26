@@ -24,8 +24,8 @@ In order to create deployment package first you need to ensure that 'cqtdeployer
 (Console QT Deployer) tool is installed. The cqtdeployer can be obtaibed here - 
 https://github.com/QuasarApp/CQtDeployer/releases. Then you need to run the 
 './TestApp/make-deploy-package.sh' script. It will build the TestApp, gather all 
-the required files in a single folder and then comress. The resulting archieve will 
-be located at ./TestApp/deploy.dir names as TestApp.7z.
+the required files in a single folder and then compress it. The resulting archieve will 
+be located at ./TestApp/deploy.dir named as TestApp.7z.
 
 To make sure that all the data are packed with the application in a single place
 either copy the archieve to a clean machine or remove qt packages from the system
