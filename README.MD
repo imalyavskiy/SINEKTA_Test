@@ -35,10 +35,10 @@ Then extract the archive and run TestApp.sh from the root of the extracted folde
 
 Cheers! Have fun!
 
-19 Feb'25  - interview
-19 Feb'25  - test task was received
-20 Feb'25  - test task was started
-26 Feb'25  - test task was accomplished
-27 Feb'25  - test task results were sent to a repsposbile person in SINEKTA 
- 7 Mar'25  - no feeback was received, even more - no feed back was gived by SINEKTA responsible person on the fact that test task results are received
- 7 Mar'25  - Conclusion about the interaction: Total disappointness. I've decided to do not ask SINEKTA for results by own initiative because have no willing to hear neither any apologises nor rejections. They got the ball and they should throw it back to me. If I failed with the task then its my failure but if they forgot about me or forgot to nofiy me of the failure it's their failure.
+- 19 Feb'25  - interview
+- 19 Feb'25  - test task was received
+- 20 Feb'25  - test task was started
+- 26 Feb'25  - test task was accomplished
+- 27 Feb'25  - test task results were sent to a repsposbile person in SINEKTA 
+-  7 Mar'25  - no feeback was received, even more - no feed back was gived by SINEKTA responsible person on the fact that test task results are received
+-  7 Mar'25  - Conclusion about the interaction: Total disappointness. I've decided to do not ask SINEKTA for results by own initiative because have no willing to hear neither any apologises nor rejections. They got the ball and they should throw it back to me. If I failed with the task then its my failure but if they forgot about me or forgot to nofiy me of the failure it's their failure.
